@@ -1,0 +1,12 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {parseCSV,normalise} from '../src/catalog.js';
+const root=process.cwd(),out=path.join(root,'dist');
+await fs.rm(out,{recursive:true,force:true});await fs.mkdir(out,{recursive:true});
+for(const file of ['index.html','styles.css','catalogo-respaldo.csv'])await fs.copyFile(path.join(root,file),path.join(out,file));
+await fs.cp(path.join(root,'assets'),path.join(out,'assets'),{recursive:true});
+await fs.cp(path.join(root,'src'),path.join(out,'src'),{recursive:true});
+const records=parseCSV(await fs.readFile(path.join(out,'catalogo-respaldo.csv'),'utf8')).map(normalise);
+if(records.length<100||records.some(x=>!x.id||!x.name||!Number.isFinite(x.price)))throw Error('El catálogo de respaldo no pasó la validación.');
+for(const file of ['assets/tragos.jpg','assets/sushi-bandeja.jpg','assets/sushi-local.jpg','assets/sushi-tabla.jpg','assets/casa-pinto-icon.svg'])await fs.access(path.join(out,file));
+console.log(`Sitio compilado en dist/ con ${records.length} productos de respaldo.`);
